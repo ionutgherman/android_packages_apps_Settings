@@ -320,12 +320,6 @@ public class BatteryInfo {
         info.isFastCharging =
                 BatteryStatus.getChargingSpeed(context, batteryBroadcast)
                         == BatteryStatus.CHARGING_FAST;
-        if (info.isLongLife) {
-            info.isBatteryDefender =
-                    FeatureFactory.getFeatureFactory()
-                            .getPowerUsageFeatureProvider()
-                            .isBatteryDefend(info);
-        }
         if (!info.mCharging) {
             updateBatteryInfoDischarging(context, shortString, estimate, info);
         } else {
@@ -424,6 +418,7 @@ public class BatteryInfo {
                 || dockDefenderMode == BatteryUtils.DockDefenderMode.TEMPORARILY_BYPASSED) {
             // Battery is charging to full
             info.remainingTimeUs = PowerUtil.convertMsToUs(chargeTimeMs);
+
             int resId = getChargingDurationResId(info.isFastCharging);
             info.remainingLabel =
                     chargeTimeMs <= 0
@@ -433,8 +428,7 @@ public class BatteryInfo {
                                     chargeTimeMs,
                                     info.isFastCharging,
                                     info.pluggedStatus,
-                                    currentTimeMs,
-                                    featureProvider);
+                                    currentTimeMs);
 
             info.chargeLabel =
                     chargeTimeMs <= 0
@@ -470,9 +464,10 @@ public class BatteryInfo {
             long chargeRemainingTimeMs,
             boolean isFastCharging,
             int pluggedStatus,
-            long currentTimeMs,
-            BatterySettingsFeatureProvider featureProvider) {
+            long currentTimeMs) {
         if (pluggedStatus == BatteryManager.BATTERY_PLUGGED_WIRELESS) {
+            BatterySettingsFeatureProvider featureProvider =
+                    FeatureFactory.getFeatureFactory().getBatterySettingsFeatureProvider();
             final CharSequence wirelessChargingRemainingLabel =
                     featureProvider.getWirelessChargingRemainingLabel(
                             context, chargeRemainingTimeMs, currentTimeMs);
