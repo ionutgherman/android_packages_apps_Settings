@@ -307,13 +307,12 @@ public class BatteryInfo {
         info.pluggedStatus = batteryBroadcast.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
         info.mCharging = info.pluggedStatus != 0;
         info.averageTimeToDischarge = estimate.getAverageDischargeTime();
-
-        final int chargingPolicy =
+        info.isLongLife =
                 batteryBroadcast.getIntExtra(
-                        BatteryManager.EXTRA_CHARGING_STATUS,
-                        BatteryManager.CHARGING_POLICY_DEFAULT);
+                                BatteryManager.EXTRA_CHARGING_STATUS,
+                                BatteryManager.CHARGING_POLICY_DEFAULT)
+                        == BatteryManager.CHARGING_POLICY_ADAPTIVE_LONGLIFE;
 
-        info.isLongLife = chargingPolicy == BatteryManager.CHARGING_POLICY_ADAPTIVE_LONGLIFE;
         info.statusLabel = Utils.getBatteryStatus(context, batteryBroadcast, isCompactStatus);
         info.batteryStatus =
                 batteryBroadcast.getIntExtra(
@@ -327,15 +326,7 @@ public class BatteryInfo {
                             .getPowerUsageFeatureProvider()
                             .isBatteryDefend(info);
         }
-        Log.d(
-                TAG,
-                "chargingPolicy = "
-                        + chargingPolicy
-                        + ", pluggedStatus = "
-                        + info.pluggedStatus
-                        + ", batteryStatus = "
-                        + info.batteryStatus);
-        if (!isPluggedIn(context, info.mCharging, chargingPolicy)) {
+        if (!info.mCharging) {
             updateBatteryInfoDischarging(context, shortString, estimate, info);
         } else {
             updateBatteryInfoCharging(
@@ -563,14 +554,6 @@ public class BatteryInfo {
             info.suggestionLabel = null;
             info.chargeLabel = info.batteryPercentString;
         }
-    }
-
-    private static boolean isPluggedIn(Context context, boolean isCharging, int chargingPolicy) {
-        return isCharging
-                || (chargingPolicy == BatteryManager.CHARGING_POLICY_ADAPTIVE_LONGLIFE
-                        && FeatureFactory.getFeatureFactory()
-                                .getBatterySettingsFeatureProvider()
-                                .isChargingOptimizationMode(context));
     }
 
     public interface BatteryDataParser {
